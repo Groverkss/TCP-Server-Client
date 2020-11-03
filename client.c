@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
     servaddr.sin_addr = server_addr;
     servaddr.sin_port = server_port;
 
-    /* Establist connection with server */
+    /* Establish connection with server */
     if (connect(sockfd, (struct sockaddr *) &servaddr, sizeof(servaddr)) == -1) {
         perror("Connect");
         exit(1);
@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
 
     /* Read lines from stdin until EOF */
     char *buffer = NULL;
-    char *response[RESPONSE_SIZE];
+    char response[RESPONSE_SIZE];
     size_t n_buffer = 0;
     int n_read;
     while(n_read = getline(&buffer, &n_buffer, stdin)) {
@@ -62,6 +62,10 @@ int main(int argc, char *argv[]) {
             if (n_read == -1) {
                 perror("Response");
                 exit(1);
+            }
+
+            if (strcmp(response, "END")) {
+                break;
             }
 
             write(STDOUT_FILENO, response, n_read);
