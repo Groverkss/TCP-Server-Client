@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    /* Initialize socker for connection */
+    /* Initialize socket for connection */
     struct sockaddr_in servaddr;
     memset(&servaddr, 0, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
@@ -72,9 +72,10 @@ int main(int argc, char *argv[]) {
             }
 
             write(STDOUT_FILENO, buffer, n_read);
+            buffer[n_read] = '\0';
             
-            const char *message = "Got your message mate\n";
-            write(clifd, message, strlen(message));
+            execute();
+
             const char *message_end = "END";
             write(clifd, message_end, strlen(message_end));
         }
