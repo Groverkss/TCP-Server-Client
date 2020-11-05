@@ -7,8 +7,10 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <errno.h>
+#include "char_vector.h"
+#include "commands.h"
 
-const int REQUEST_SIZE = 8192;
+const int REQUEST_SIZE = 819200;
 const int MAX_CONN = 8;
 
 int main(int argc, char *argv[]) {
@@ -71,12 +73,18 @@ int main(int argc, char *argv[]) {
                 break;
             }
 
-            write(STDOUT_FILENO, buffer, n_read);
-            buffer[n_read] = '\0';
+            buffer[n_read - 1] = '\0';
+            printf("%s", buffer);
             
-            execute();
+            CVector *args = to_args(buffer);
 
-            const char *message_end = "END";
+            int return_code = execute(args, clifd);
+            if (return_code == 1) {
+                printf("Unknown Command\n");
+            }
+
+            freeCVector(args); 
+
             write(clifd, message_end, strlen(message_end));
         }
 

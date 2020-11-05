@@ -7,8 +7,10 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <errno.h>
+/*#include "char_vector.h"*/
 
 const int RESPONSE_SIZE = 8192;
+const char *message_end = "__PACKET_END_MESSAGE__";
 
 int main(int argc, char *argv[]) {
     struct in_addr server_addr;
@@ -58,17 +60,27 @@ int main(int argc, char *argv[]) {
 
         write(sockfd, buffer, n_read);
 
+        int flag = 0;
         while(n_read = read(sockfd, response, RESPONSE_SIZE)) {
             if (n_read == -1) {
                 perror("Response");
                 exit(1);
             }
 
-            if (strcmp(response, "END")) {
-                break;
+            response[n_read] = '\0';
+
+            if (n_read >= strlen(message_end)) {
+                if (!strcmp(response + n_read - strlen(message_end), message_end)) {
+                    flag = 1;
+                    response[n_read - strlen(message_end)] = '\0';
+                }
             }
 
-            write(STDOUT_FILENO, response, n_read);
+            fprintf(stdout, "%s", response);
+
+            if (flag) {
+                break;
+            }
         }
     }
 

@@ -1,4 +1,9 @@
-#include "libs.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <string.h>
+#include <errno.h>
+#include "char_vector.h"
 
 static size_t initSize = 2;
 
@@ -8,7 +13,8 @@ void initCVector(CVector *cvector) {
 
     if (cvector->vector == NULL) {
         // Throw fatal error
-        fatal_error_check(0, 0);
+        perror("CVector");
+        exit(1);
     }
 
     cvector->vector[0] = NULL;
@@ -24,7 +30,8 @@ static void increase_size(CVector *cvector) {
 
     if (cvector->vector == NULL) { 
         // Throw fatal error
-        fatal_error_check(0, 0);
+        perror("CVector");
+        exit(1);
     }
 
     for (int i = cvector->used; i < cvector->size; i++) {
@@ -71,7 +78,8 @@ CVector* to_args(char *str) {
     CVector *argv = malloc(sizeof(CVector));
     if (argv == NULL) {
         // Throw fatal error
-        fatal_error_check(0, 0);
+        perror("CVector");        
+        exit(1);
     }
 
     initCVector(argv);
@@ -85,7 +93,8 @@ CVector* to_args(char *str) {
 
         if (arg == NULL) {
             // Throw fatal error
-            fatal_error_check(0, 0);
+            perror("CVector");
+            exit(1);
         }
 
         pbCVector(argv, arg);
