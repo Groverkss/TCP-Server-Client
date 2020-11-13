@@ -39,21 +39,6 @@ static void increase_size(CVector *cvector) {
     }
 }
 
-static void decrease_size(CVector *cvector) {
-   char **new_vector = malloc(cvector->used * sizeof(char *));  
-
-   int current = 0;
-   for (int i = 0; i < cvector->used; i++) {
-       if (cvector->vector[i]) {
-           new_vector[current++] = cvector->vector[i];
-       }
-   }
-
-   cvector->size = cvector->used;
-   free(cvector->vector);
-   cvector->vector = new_vector;
-}
-
 /* Vector Mode */
 
 void pbCVector(CVector *cvector, char *element) {
@@ -85,7 +70,7 @@ CVector* to_args(char *str) {
     initCVector(argv);
 
     char *save_args;
-    char *args = strtok_r(str, " \t", &save_args);
+    char *args = strtok_r(str, " \t\n", &save_args);
 
     while(args) {
         char *arg = malloc((strlen(args) + 1) * sizeof(char));
@@ -99,7 +84,7 @@ CVector* to_args(char *str) {
 
         pbCVector(argv, arg);
 
-        args = strtok_r(NULL, " \t", &save_args);
+        args = strtok_r(NULL, " \t\n", &save_args);
     }
 
     return argv;

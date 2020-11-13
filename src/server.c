@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -8,9 +9,9 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include "char_vector.h"
+#include "net_structs.h"
 #include "commands.h"
 
-const int REQUEST_SIZE = 819200;
 const int MAX_CONN = 8;
 
 int main(int argc, char *argv[]) {
@@ -64,28 +65,18 @@ int main(int argc, char *argv[]) {
         /* Accept incoming request */
         int clifd = accept(sockfd, (struct sockaddr *) &cliaddr, &cli_addr_len);
 
-        char buffer[REQUEST_SIZE];
         int n_read;
 
+        struct Payload request;
         /* Read command while client is outputing */
-        while(n_read = read(clifd, buffer, REQUEST_SIZE)) {
+        while((n_read = read(clifd, (char *)&request, sizeof(struct Payload)))) {
             if (n_read == -1) {
                 break;
             }
 
-            buffer[n_read - 1] = '\0';
-            printf("%s", buffer);
-            
-            CVector *args = to_args(buffer);
-
-            int return_code = execute(args, clifd);
-            if (return_code == 1) {
-                printf("Unknown Command\n");
-            }
-
-            freeCVector(args); 
-
-            write(clifd, message_end, strlen(message_end));
+            fprintf(stderr, "%d\n%d\n%d\n%d\n%s\n\n\n", request.response,
+                    request.call, request.length, request.left, request.data);
+            execute(&request, clifd);
         }
 
         fprintf(stderr, "Connection Ended\n");

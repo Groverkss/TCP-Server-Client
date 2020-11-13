@@ -1,18 +1,18 @@
 IDIR=include
 SDIR=src
 CC=gcc
-CFLAGS=-I$(IDIR)
+CFLAGS=-I$(IDIR) -Wall -Werror
 
 ODIR=$(SDIR)/obj
 LDIR =lib
 
 LIBS=-lm
 
-_DEPS = char_vector.h commands.h
+_DEPS = char_vector.h commands.h net_structs.h
 
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
-_OBJ = char_vector.o
+_OBJ = char_vector.o net_structs.o
 
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 

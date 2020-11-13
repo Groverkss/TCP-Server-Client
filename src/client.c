@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -7,10 +8,63 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <errno.h>
-/*#include "char_vector.h"*/
+#include "char_vector.h"
+#include "net_structs.h"
 
-const int RESPONSE_SIZE = 8192;
-const char *message_end = "__PACKET_END_MESSAGE__";
+int get_files(struct Payload* payload, char *buffer, int fd) {
+    return 1;
+}
+
+int list_files(struct Payload* payload, char *buffer, int fd) {
+    payload->call = 1;
+    payload->response = 0;
+    write(fd, (char *)payload, sizeof(struct Payload));
+
+    struct Payload response;
+    for (;;) {
+        read(fd, (char *)&response, sizeof(struct Payload));
+        if (response.response == 3) {
+            /* Error detected */
+            return 1;
+        } else if (response.response == 2) {
+            /* End of stream */
+            return 0;
+        }
+        write(STDOUT_FILENO, response.data, response.length);
+        write(STDOUT_FILENO, "\n", 1);
+    }
+}
+
+int change_dir(struct Payload* payload, char *buffer, int fd) {
+    payload->call = 2;
+    payload->response = 0;
+    strcpy(payload->data, buffer);
+    payload->length = strlen(buffer);
+    write(fd, (char *)payload, sizeof(struct Payload));
+
+    struct Payload response;
+    read(fd, (char *)&response, sizeof(struct Payload));
+    
+    if (response.response == 2) {
+        /* Success code */
+        return 0;
+    } else {
+        /* Error dected */
+        return 1;
+    }
+}
+
+char *Commands[] = {
+    "get",
+    "ls",
+    "cd"
+};
+
+int (*Commandfun[])(struct Payload*, char *buffer, int) = {
+    get_files,
+    list_files,
+    change_dir
+};
 
 int main(int argc, char *argv[]) {
     struct in_addr server_addr;
@@ -45,42 +99,43 @@ int main(int argc, char *argv[]) {
     /* Establish connection with server */
     if (connect(sockfd, (struct sockaddr *) &servaddr, sizeof(servaddr)) == -1) {
         perror("Connect");
-        exit(1);
-    }
+        exit(1); }
 
     /* Read lines from stdin until EOF */
     char *buffer = NULL;
-    char response[RESPONSE_SIZE];
     size_t n_buffer = 0;
     int n_read;
-    while(n_read = getline(&buffer, &n_buffer, stdin)) {
+    while((n_read = getline(&buffer, &n_buffer, stdin))) {
         if (n_read == -1) {
             break;
         }
 
-        write(sockfd, buffer, n_read);
+        /* Convert buffer to arguement list */
+        char *buffer_dup = strdup(buffer);
+        CVector *args = to_args(buffer_dup);
 
-        int flag = 0;
-        while(n_read = read(sockfd, response, RESPONSE_SIZE)) {
-            if (n_read == -1) {
-                perror("Response");
-                exit(1);
-            }
+        /* Prepare request payload */
+        struct Payload request;
+        init_pay(&request);
 
-            response[n_read] = '\0';
+        if (args->used == 0) {
+            fprintf(stderr, "Invalid Command\n");
+        }
 
-            if (n_read >= strlen(message_end)) {
-                if (!strcmp(response + n_read - strlen(message_end), message_end)) {
-                    flag = 1;
-                    response[n_read - strlen(message_end)] = '\0';
-                }
-            }
-
-            fprintf(stdout, "%s", response);
-
-            if (flag) {
+        int c_size = sizeof(Commands) / sizeof(char *);
+        int status = -1;
+        for (int i = 0; i < c_size; i++) {
+            if (!strcmp(Commands[i], args->vector[0])) {
+                status = (*Commandfun[i])(&request, buffer, sockfd);
                 break;
             }
+        }
+
+        if (status == -1) {
+            printf("Invalid Command\n");
+        } else if (status == 1) {
+            printf("Server Error\n");
+            break;
         }
     }
 
