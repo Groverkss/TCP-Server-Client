@@ -7,7 +7,7 @@ struct Payload {
     uint16_t response;
     uint16_t call;
     uint16_t length;
-    uint16_t left;
+    uint64_t left;
     char data[RESPONSE_SIZE];
 };
 

@@ -74,8 +74,12 @@ int main(int argc, char *argv[]) {
                 break;
             }
 
-            fprintf(stderr, "%d\n%d\n%d\n%d\n%s\n\n\n", request.response,
-                    request.call, request.length, request.left, request.data);
+            if (n_read != sizeof(struct Payload)) {
+                continue;
+            }
+
+            /*fprintf(stderr, "%d\n%d\n%d\n%ld\n%s\n\n\n", request.response,*/
+                    /*request.call, request.length, request.left, request.data);*/
             execute(&request, clifd);
         }
 
